@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Colección de Maquetas 1/43</title>
+    <!-- SheetJS (XLSX) Library -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --racing-red: #ef4444;
+            --racing-red-hover: #dc2626;
+            --racing-accent: #38bdf8;
+            --racing-gold: #f59e0b;
+            --racing-emerald: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* HEADER */
+        header {
+            background-color: rgba(30, 41, 59, 0.9);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        .header-title-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-icon {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 8px;
+            color: var(--racing-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .badge {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--racing-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+
+        .btn-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            color: white;
+        }
+
+        .btn-red { background: var(--racing-red); }
+        .btn-red:hover { background: var(--racing-red-hover); }
+        .btn-emerald { background: var(--racing-emerald); }
+        .btn-dark { background: #1e293b; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-dark:hover { background: var(--bg-card-hover); }
+
+        /* LAYOUT */
+        .layout-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* SIDEBAR */
+        aside {
+            width: 256px;
+            background: rgba(30, 41, 59, 0.6);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .sidebar-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .menu-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .menu-item {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .menu-item:hover { background: rgba(51, 65, 85, 0.5); }
+        .menu-item.active { background: var(--racing-red); color: white; font-weight: bold; }
+
+        .menu-count {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: var(--bg-dark);
+            color: var(--text-muted);
+        }
+
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-card);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* MAIN CONTENT */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background: var(--bg-dark);
+            overflow: hidden;
+        }
+
+        .toolbar {
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.4);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 8px 12px 8px 32px;
+            font-size: 12px;
+            color: white;
+            width: 320px;
+            outline: none;
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 14px;
+            height: 14px;
+        }
+
+        .content-area {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 20px;
+        }
+
+        /* TABLA DE MODELOS */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            min-width: 1000px;
+        }
+
+        th {
+            background: rgba(30, 41, 59, 0.9);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 16px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+            font-size: 12px;
+        }
+
+        tr:hover { background: rgba(51, 65, 85, 0.3); }
+
+        .img-thumb {
+            width: 160px;
+            height: 96px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .img-placeholder {
+            width: 160px;
+            height: 96px;
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: rgba(15, 23, 42, 0.5);
+            color: var(--text-muted);
+            font-size: 10px;
+            gap: 4px;
+        }
+
+        .logo-thumb {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .logo-placeholder {
+            width: 64px;
+            height: 64px;
+            border: 2px dashed var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.5);
+            color: var(--text-muted);
+        }
+
+        /* GRID VIEW */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .car-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-img {
+            width: 100%;
+            height: 256px;
+            object-fit: cover;
+        }
+
+        .card-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        /* MODALES */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex !important;
+        }
+
+        .modal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* RESPONSIVE MÓVIL */
+        @media (max-width: 768px) {
+            aside {
+                position: absolute;
+                inset-y: 0;
+                left: 0;
+                z-index: 30;
+                transform: translateX(-100%);
+                background: rgba(30, 41, 59, 0.98);
+            }
+
+            aside.open {
+                transform: translateX(0);
+            }
+
+            .mobile-toggle {
+                display: block !important;
+            }
+
+            .desktop-only {
+                display: none !important;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+        }
+
+        .mobile-toggle {
+            display: none;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <header>
+        <div class="header-title-box">
+            <button class="btn btn-dark mobile-toggle" onclick="toggleSidebar()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <div class="header-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+            </div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <h1 style="font-size: 16px; font-weight: 800;">Colección Maquetas 1/43</h1>
+                    <span id="totalBadgeCount" class="badge">337 modelos</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group desktop-only">
+            <button onclick="exportToExcel()" class="btn btn-emerald">Exportar Excel</button>
+            <button onclick="saveCollectionWithNotification()" class="btn btn-emerald">Guardar Colección</button>
+            <button onclick="openCarModal()" class="btn btn-red">+ Añadir Modelo</button>
+        </div>
+    </header>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <div class="layout-container">
+        <!-- SIDEBAR -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <span>Categorías (13)</span>
+                <button class="btn btn-dark mobile-toggle" onclick="toggleSidebar()" style="padding: 4px;">✕</button>
+            </div>
+
+            <nav id="submenuContainer" class="menu-container"></nav>
+
+            <div class="sidebar-footer">
+                <button onclick="openGlobalLogoModal()" class="btn btn-dark" style="width: 100%; justify-content: center;">Asignar Logo por Marca</button>
+                <button onclick="exportToExcel()" class="btn btn-emerald mobile-toggle" style="width: 100%; justify-content: center;">Exportar Excel</button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                    <button onclick="exportCollection()" class="btn btn-dark" style="justify-content: center; font-size: 10px;">Exportar JSON</button>
+                    <button onclick="triggerImport()" class="btn btn-dark" style="justify-content: center; font-size: 10px;">Importar JSON</button>
+                    <input type="file" id="importFileInput" class="hidden" accept=".json" onchange="importCollection(event)">
+                </div>
+                <button onclick="resetToDefaultData()" class="btn" style="background: transparent; color: var(--text-muted); font-size: 10px; width: 100%; justify-content: center;">Restablecer 337 modelos</button>
+            </div>
+        </aside>
+
+        <!-- CONTENIDO -->
+        <main>
+            <div class="toolbar">
+                <div class="search-wrapper">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="text" id="searchInput" oninput="handleSearchInput()" placeholder="Buscar modelo, marca, fab, >700cv..." class="search-input">
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <select id="sortFieldSelect" onchange="handleSortChange()" class="form-control">
+                        <option value="name">Modelo</option>
+                        <option value="brand">Marca</option>
+                        <option value="power">Potencia (CV)</option>
+                        <option value="speed">Velocidad (km/h)</option>
+                        <option value="accel">Aceleración (0-100)</option>
+                        <option value="maker">Fab. Miniatura</option>
+                    </select>
+
+                    <button id="sortOrderBtn" onclick="toggleSortDirection()" class="btn btn-dark" title="Invertir dirección de orden" style="padding: 8px 10px;">⬆️ ASC</button>
+
+                    <div style="display: flex; gap: 4px; background: var(--bg-dark); padding: 2px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <button id="viewListBtn" onclick="setViewMode('list')" class="btn btn-red" style="padding: 6px 10px;">Tabla</button>
+                        <button id="viewGridBtn" onclick="setViewMode('grid')" class="btn btn-dark" style="padding: 6px 10px;">Grid</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="contentArea" class="content-area"></div>
+        </main>
+    </div>
+
+    <!-- MODAL GESTIÓN MODELO -->
+    <div id="carModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modalTitle" style="font-size: 14px; font-weight: bold;">Añadir Nuevo Modelo</h3>
+                <button onclick="closeCarModal()" class="btn btn-dark" style="padding: 4px 8px;">✕</button>
+            </div>
+            <form id="carForm" onsubmit="handleCarFormSubmit(event)" class="modal-body">
+                <input type="hidden" id="carFormId">
+                <div class="form-group">
+                    <label>Nombre del Modelo *</label>
+                    <input type="text" id="carFormName" required class="form-control" placeholder="ej: FERRARI LAFERRARI">
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Marca *</label>
+                        <input type="text" id="carFormBrand" required class="form-control" placeholder="ej: Ferrari">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría *</label>
+                        <select id="carFormCategory" required class="form-control"></select>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Potencia (CV)</label>
+                        <input type="number" id="carFormPower" class="form-control" placeholder="963">
+                    </div>
+                    <div class="form-group">
+                        <label>Velocidad (km/h)</label>
+                        <input type="number" id="carFormSpeed" class="form-control" placeholder="350">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>0-100 km/h (s)</label>
+                        <input type="number" step="0.1" id="carFormAccel" class="form-control" placeholder="2.9">
+                    </div>
+                    <div class="form-group">
+                        <label>Fab. Miniatura</label>
+                        <input type="text" id="carFormMaker" class="form-control" placeholder="Minichamps">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <button type="button" id="deleteCarBtn" onclick="handleModalDelete()" class="btn btn-red hidden" style="background: #991b1b;">🗑️ Eliminar</button>
+                    <div style="display: flex; gap: 8px; margin-left: auto;">
+                        <button type="button" onclick="closeCarModal()" class="btn btn-dark">Cancelar</button>
+                        <button type="submit" class="btn btn-red">Guardar Modelo</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL LOGO GLOBAL -->
+    <div id="globalLogoModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="font-size: 14px; font-weight: bold;">Asignar Logo Global por Marca</h3>
+                <button onclick="closeGlobalLogoModal()" class="btn btn-dark" style="padding: 4px 8px;">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Seleccionar Marca</label>
+                    <select id="globalBrandSelect" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label>Imagen del Logo</label>
+                    <input type="file" id="globalBrandLogoFile" accept="image/*" class="form-control">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+                    <button type="button" onclick="closeGlobalLogoModal()" class="btn btn-dark">Cancelar</button>
+                    <button type="button" onclick="applyGlobalLogo()" class="btn btn-emerald">Aplicar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DB_NAME = 'Garage143DB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'cars';
+
+        const CATEGORIES = [
+            "EN COLECCIÓN", "COMPRAS 2026", "COMPRAS 2027", "URGENTES NO DISPONIBLES",
+            "¿NOVEDADES A INCLUIR?", "PRIORITARIOS", "ORDINARIOS", "UPGRADES",
+            "IMPRESIÓN 3D", "PEDIR MODELO 3D", "DUDAS", "PENDIENTES DE ANUNCIO", "RAROS"
+        ];
+
+        const RAW_DATA = {
+            "EN COLECCIÓN": ["ALFA ROMEO GIULIA GTAM", "ASTON MARTIN DB11 2016", "ASTON MARTIN DBS SUPERLEGGERA 2019", "ASTON MARTIN ONE 77", "ASTON MARTIN VANQUISH 2017", "AUDI R8 COUPE", "AUDI R8 V10 PLUS", "AUDI RS5-R", "BENTLEY CONTINENTAL 2020", "BENTLEY CONTINENTAL SUPERSPORTS", "BUGATTI VEYRON GRAND SPORT", "CHEVROLET CAMARO ZL1", "CHEVROLET CORVETTE C6 2009", "CHEVROLET CORVETTE C7 GRAND SPORT 2017", "CHEVROLET CORVETTE C8 STINGRAY 2020", "CHRYSLER FOUR TWELVE", "CITROEN DS E-TENSE", "CITROEN GT VISION", "DODGE VIPER SRT 10", "FERRARI 458 ITALIA", "FERRARI 488 GTB", "FERRARI 599 GTO", "FERRARI 812 COMPETIZIONE", "FERRARI 812 SUPERFAST", "FERRARI CALIFORNIA", "FERRARI CALIFORNIA T", "FERRARI ENZO", "FERRARI ENZO GT CONCEPT", "FERRARI F12 BERLINETTA", "FERRARI F12 TDF", "FERRARI F430 SCUDERIA ABU DHABI", "FERRARI F50 GT", "FERRARI F8 TRIBUTO", "FERRARI FXX", "FERRARI FXX-K EVO", "FERRARI LAFERRARI", "FORD MUSTANG SHELBY GT500", "GEMBALLA MIRAGE U-1", "GUMPERT APOLLO", "HONDA NXS 2016", "INFINITI VISION", "ITALDESIGN ZEROUNO", "JAGUAR CX-75", "KOENIGSEGG AGERA R (WHITE)", "KOENIGSEGG CCX", "KOENIGSEGG REGERA", "LAMBORGHINI AVENTADOR LP720-4", "LAMBORGHINI AVENTADOR S", "LAMBORGHINI AVENTADOR SV", "LAMBORGHINI AVENTADOR SVJ", "LAMBORGHINI GALLARDO LP 570-4", "LAMBORGHINI HURACAN EVO", "LAMBORGHINI HURACAN PERFORMANTE", "LAMBORGHINI HURACAN TECNICA", "LAMBORGHINI MURCIELAGO LP-670 SUPERFAST", "LAMBORGHINI VENENO", "LEXUS LFA", "LEXUS RC F PERFORMANCE", "MASERATI GRANTURISMO", "MASERATI MC12 COMPETIZIONE", "MCLAREN 570S", "MCLAREN 600LT", "MCLAREN 675LT", "MCLAREN 720S", "MCLAREN F1 GTR LONGTAIL", "MCLAREN F1 LM", "MCLAREN GT", "MCLAREN P1 GTR", "MERCEDES C63 AMG BLACK SERIES", "MERCEDES SL 65 AMG BLACK SERIES", "MERCEDES SLS AMG BLACK SERIES sunbeam", "NIO EP9", "NISSAN GT-R NISMO 2020", "NISSAN VISION", "NOBLE M600", "PAGANI HUAYRA BC", "PAGANI HUAYRA PACHETTO", "PAGANI ZONDA CINQUE", "PAGANI ZONDA REVOLUCION", "PORSCHE 911 GT3 RS", "PORSCHE CARRERA GT", "PORSCHE GEMBALLA MIRAGE GT", "PORSCHE VISION GRAN TURISMO", "RUF CTR3", "SALEEN S7R", "SCG GLICKENHAUS 003", "SSC TUATARA", "SSC ULTIMATE AERO", "TVR CERBERA SPEED 12", "WIESMANN GT", "PORSCHE GT2 RS", "MCLAREN SPEEDTAIL", "APOLLO IE", "LOTUS EXIGE SPORT", "BUGATTI LA VOITURE NOIRE", "FERRARI FXX-K", "AUDI R8 GT", "GTA SPANO", "LOTUS EVIJA", "MCLAREN SENNA MSO", "KOENIGSEGG GEMERA", "LAMBORGHINI SESTO ELEMENTO", "MCLAREN P1", "FERRARI 488 CHALLENGE EVO", "KOENIGSEGG JESKO", "PORSCHE 919 STREET", "LAMBORGHINI VISION", "LAMBORGHINI HURACAN STO", "MCLAREN ARTURA", "APOLLO IE EVO", "PORSCHE MISSION E", "LAMBORGHINI TERZO MILENNIO", "BUGATTI CHIRON PUR SPORT", "AUDI PB18 E-TRON", "ARCFOX GT", "LAMBORGHINI SC18 ALSTON", "MAZZANTI EVANTRA MILLECAVALLI", "RENAULT TREZOR CONCEPT", "MERCEDES AMG VISION", "FERRARI 599XX", "FERRARI 488 SPECIALE", "ASTON MARTIN VANTAGE F1 EDITION", "BUGATTI DIVO", "LAMBORGHINI INVENCIBLE", "PORSCHE 718 CAYMAN GT4 RS", "PINNINFARINA BATTISTA", "PORSCHE 911 TURBO S", "BUGATTI CENTODIECI", "FERRARI DAYTONA SP3", "MCLAREN 765LT", "RENAULT RAFALE ALPINE", "ASTON MARTIN VULCAN", "FERRARI 488 PISTA", "FERRARI J50", "FERRARI P80C", "ATS GT", "LAMBORGHINI REVUELTO", "LAMBORGHINI HURACAN LP", "PAGANI HUAYRA R", "PORSCHE GT3 RS 2021", "HENNESSEY VENOM F5", "HENNESSEY VENOM GT", "APOLLO ARROW", "CZINGER 21C BLACKBIRD", "ZENVO ST1", "LAMBORGHINI AVENTADOR ULTIMAE"],
+            "COMPRAS 2026": ["FERRARI SF90XX", "XIAOMI VISION GT", "ZENVO AURORA", "ARES S1", "SALEEN S5S RAPTOR", "DEUS VAYANNE", "BMW M4 SCHNITZER"],
+            "COMPRAS 2027": ["FERRARI 488 CHALLENGE", "FERRARI 12 CILINDRI", "LAMBORGHINI FENOMENO", "PORSCHE 918 SPYDER MU", "PORSCHE MISSION X", "FERRARI PORTOFINO", "FERRARI 296 SPECIALE", "ASTON MARTIN VALIANT (Spark gold)", "ASTON MARTIN VALKYRIE", "FERRARI VISION GT", "PAGANI UTOPIA", "BUGATTI VISION", "RIMAC NEVERA", "LAMBORGHINI TEMERARIO", "FERRARI SP48 UNICA 3D", "FERRARI SP38 3D", "NOBLE M500 3D", "KTM XBOW GT 3D", "ASTON MARTIN VALHALLA", "MERCEDES AMG PROJECT ONE I-SCALE"],
+            "URGENTES NO DISPONIBLES": ["KOENIGSEGG ONE", "KOENIGSEGG AGERA RS", "INFINITI PROJECT BLACK S", "LAMBORGHINI SIAN", "MARUSSIA B2", "BUGATTI CHIRON PROFILEE", "BUGATTI CHIRON SUPER SPORT +300", "MERCEDES VISION ONE ELEVEN", "PAGANI ZONDA 760LM", "MAZDA VISION COUPE GT3"],
+            "¿NOVEDADES A INCLUIR?": ["PAGANI IMOLA LCD MODELS", "KOENIGSEGG JESKO ABSOLUT Solido", "BRABHAM BT62 Schuco red", "DEVEL SIXTEEN PEAKO MODELS", "MCLAREN SOLUS GT", "PORSCHE 960 VISION GRANTURISMO CONCEPT 2017", "MCLAREN W1", "BUGATTI BROUILLARD", "LAMBORGHINI MANIFESTO", "BUGATTI FKP HOMMAGE", "BUGATTI TOURBILLON", "GENESIS MAGMA GT CONCEPT", "LAMBORGHINI REVUELTO SV", "BUGATTI DESTRIER", "MERCEDES AMG GT-R BLACK SERIES (ORANGE)", "PAGANI CODALUNGA", "GORDON MURRAY T50S"],
+            "PRIORITARIOS": ["BUGATTI CHIRON SPORT", "FERRARI 296 GTB", "MASERATI MC20", "ASTON MARTIN VANTAGE AMR GT3", "ASTON MARTIN VALOUR", "MASERATI GRANTURISMO trofeo 2023", "PORSCHE 904 LIVING LEGEND CONCEPT 2020", "ALFA ROMEO STRADALE 2023", "FERRARI SF 90", "FERRARI F80", "BUGATTI BOLIDE (red spec)", "LAMBORGHINI CENTENARIO", "FERRARI 849 TESTARROSSA", "ASPARK OWL"],
+            "ORDINARIOS": ["ALFA ROMEO 8C COMPETIZIONE", "ASTON MARTIN V12 ZAGATO", "ASTON MARTIN V12 VANQUISH ZAGATO", "BMW VISION EFFICIENT DYNAMICS", "CHEVROLET CAMARO ZL1 2019", "FERRARI F40 LM", "FERRARI F430", "FERRARI ROMA", "FORD GT 2015", "HONDA NSX 2022", "LAMBORGHINI COUNTACH 2021", "LAMBORGHINI DIABLO GTR", "LAMBORGHINI REVENTON", "LOTUS EMIRA", "LOTUS EVORA GTE", "MCLAREN MP4 12C", "MERCEDES AMG GT", "TOYOTA SUPRA 2020", "W MOTORS FENYR SUPERSPORT", "W MOTORS LYKAN HYPERSPORT", "LAMBORGHINI AVENTADOR LP700", "LAMBORGHINI GALLARDO LP", "DODGE CHARGER SRT", "ASTON MARTIN V12 VANTAGE", "ASTON MARTIN DB12 2025 Solido", "FERRARI AMALFI", "LEXUS LC500 EDGE KYOSHO", "PORSCHE 911 GT1", "BENTLEY MULLINER BATUR TSM"],
+            "UPGRADES": ["LAMBORGHINI MURCIELAGO SRV", "KOENIGSEGG JESKO", "ASTON MARTIN VANQUISH", "MCLAREN P1"],
+            "IMPRESIÓN 3D": ["BUGATTI ATLANTIC", "TRION NEMESIS", "REZVANI BEAST ALPHA", "ARRINERA HUSSARYA", "MOSLER MT900 LAND SHARK", "APEX AP-0 CONCEPT", "HONGQI S9"],
+            "PEDIR MODELO 3D": ["INFINITI PROJECT BLACK S", "GTA SPANO 2015", "MCLAREN ULTIMATE VISION GT", "TUSHEK TS900", "REZVANI BEAST", "HTT PLETHORE", "ARASH IMPERIUM", "FERRARI CZ26", "PRAGA BOHEMA"],
+            "DUDAS": ["ASTON MARTIN VALKYRIE AMR PRO", "ASTON MARTIN VIKTOR", "FERRARI 599XX EVO", "FERRARI P4/5", "NISSAN GT R50", "MAZDA FURAI matte black spark", "LAMBORGHINI 5-95 ZAGATO", "MCLAREN 650S", "MERCEDES AMG GT-63", "LOTUS ELISE (EXIGE)", "ASTON MARTIN VANQUISH ZAGATO Spark", "ASTON MARTIN VANTAGE 2018 LIME/RED", "CHEVROLET CORVETTE FOSFO TSM", "KOENIGSEGG CCXR VMB MODELS", "FERRARI SP12 3D", "FERRARI F430 SP12", "ASCARI KZ1R 3D", "ASTON MARTIN VANTAGE 2025", "B ENGINEERING EDONIS 3D", "MCMURTRY SPEIRLING 3D", "TESLA ROADSTER 3D", "DALLARA STRADALE 3D", "NARAN HYPER COUPE 3D", "LAMBORGHINI ESSENZA SCV12 3D", "BMW I8 AC SCHNITZER 3D", "ZENVO TSR-S 3D"],
+            "PENDIENTES DE ANUNCIO": ["MCLAREN SABRE", "MCLAREN 750S", "FERRARI KC23", "Genesis Vision GT", "MCLAREN GTS", "BYD YANGWAN U9 ELECTRIC", "ASTON MARTIN DBS 2024", "ASTON MARTIN VANQUISH 2025", "KOENIGSEGG SADAIRS SPEAR", "MERCEDES CONCEPT GT XX", "CHEVROLET CORVETTE GRAN TURISMO VISION CX.R", "CHEVROLET CORVETTE CX CONCEPT 2025", "GORDON MURRAY S1 LM", "GORDON MURRAY LE MANS GTR", "ASTON MARTIN DB12 S", "FERRARI SC40", "FERRARI P76", "LEXUS SPORT CONCEPT", "RIMAC NEVERA R", "RED BULL RB17", "ALPINE ALPENGLOW", "AUDI RS5 2027", "JIYUE ROBO X", "HONDA NSX ITALDESIGN TRIBUTE", "FORD GT MK IV", "MASERATI GT2 STRADALE", "ACURA NEXERA VISION", "ASTON MARTIN VALEN", "KOENIGSEGG CCGT1", "MCLAREN 6GT", "HENNESSEY BLACKBIRD", "AUDI NUVOLARI", "GMA S1", "GTA SPANO R"],
+            "RAROS": ["GARAGISTI GP1", "VITTORI TURBIO", "CAPRICORN 01 ZAGATO", "BERTONE GB110", "AJLANI DRAKUMA", "SHAYTON EQUILIBRIUM", "ARIA FXE", "FITTIPALDI EF7", "GIAMARO KATLA", "DREAME NEBULA 01", "ELEKTRON QUASAR", "LANZANTE", "DELAGE D12", "TUSHEK AEON E"]
+        };
+
+        let db;
+        let cars = [];
+        let activeCategory = "ALL";
+        let currentViewMode = "list";
+        let currentSortField = "name";
+        let currentSortDirection = "asc";
+        let searchQuery = "";
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve();
+                };
+                request.onerror = (e) => reject(e);
+            });
+        }
+
+        function loadCarsFromDB() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = (e) => reject(e);
+            });
+        }
+
+        function saveCarsToDB(carsList) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.clear();
+                carsList.forEach(c => store.put(c));
+                tx.oncomplete = () => resolve();
+                tx.onerror = (e) => reject(e);
+            });
+        }
+
+        function extractBrand(name) {
+            const knownBrands = [
+                "ALFA ROMEO", "ASTON MARTIN", "AUDI", "BENTLEY", "BUGATTI", "CHEVROLET", "CHRYSLER",
+                "CITROEN", "DODGE", "FERRARI", "FORD", "GEMBALLA", "GUMPERT", "HONDA", "INFINITI",
+                "ITALDESIGN", "JAGUAR", "KOENIGSEGG", "LAMBORGHINI", "LEXUS", "MASERATI", "MCLAREN",
+                "MERCEDES", "NIO", "NISSAN", "NOBLE", "PAGANI", "PORSCHE", "RUF", "SALEEN", "SCG",
+                "SSC", "TVR", "WIESMANN", "LOTUS", "GTA", "APOLLO", "ARCFOX", "MAZZANTI", "RENAULT",
+                "PININFARINA", "PINNINFARINA", "ATS", "CZINGER", "ZENVO", "XIAOMI", "ARES", "DEUS",
+                "BMW", "RIMAC", "KTM", "MARUSSIA", "MAZDA", "BRABHAM", "DEVEL", "GENESIS", "GORDON MURRAY",
+                "ASPARK", "TOYOTA", "W MOTORS", "TRION", "REZVANI", "ARRINERA", "MOSLER", "APEX", "HONGQI",
+                "TUSHEK", "HTT", "ARASH", "PRAGA", "ASCARI", "B ENGINEERING", "MCMURTRY", "TESLA",
+                "DALLARA", "NARAN", "BYD", "RED BULL", "ALPINE", "JIYUE", "ACURA", "GMA", "GARAGISTI",
+                "VITTORI", "CAPRICORN", "BERTONE", "AJLANI", "SHAYTON", "ARIA", "FITTIPALDI", "GIAMARO",
+                "DREAME", "ELEKTRON", "LANZANTE", "DELAGE"
+            ];
+            const upper = name.toUpperCase();
+            for (let b of knownBrands) {
+                if (upper.startsWith(b)) return b;
+            }
+            return name.split(' ')[0] || "Desconocida";
+        }
+
+        function generateDefaultSpecs(name, brand) {
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            const absHash = Math.abs(hash);
+
+            const power = 500 + (absHash % 750);
+            const speed = 290 + (absHash % 140);
+            const accel = (2.1 + (absHash % 18) / 10).toFixed(1);
+
+            const makers = ["Minichamps", "Spark", "AutoArt", "BBR", "LookSmart", "IXO Models", "Solido", "Schuco", "Kyosho", "Norev", "TSM Models"];
+            const maker = makers[absHash % makers.length];
+
+            return { power, speed, accel: parseFloat(accel), maker };
+        }
+
+        function generateInitialCars() {
+            let idCounter = 1;
+            const carsList = [];
+
+            for (let category of CATEGORIES) {
+                const names = RAW_DATA[category] || [];
+                for (let name of names) {
+                    const brand = extractBrand(name);
+                    const specs = generateDefaultSpecs(name, brand);
+
+                    carsList.push({
+                        id: idCounter++,
+                        category: category,
+                        name: name,
+                        brand: brand,
+                        image: null,
+                        logo: null,
+                        power: specs.power,
+                        speed: specs.speed,
+                        accel: specs.accel,
+                        maker: specs.maker
+                    });
+                }
+            }
+            return carsList;
+        }
+
+        window.onload = async function() {
+            await initDB();
+            let storedCars = await loadCarsFromDB();
+
+            if (!storedCars || storedCars.length === 0) {
+                cars = generateInitialCars();
+                await saveCarsToDB(cars);
+            } else {
+                cars = storedCars;
+            }
+
+            activeCategory = 'ALL';
+            searchQuery = '';
+
+            renderSubmenus();
+            updateDashboard();
+        };
+
+        async function saveCollectionWithNotification() {
+            await saveCarsToDB(cars);
+            alert(`Colección guardada (${cars.length} modelos).`);
+        }
+
+        async function resetToDefaultData() {
+            if (confirm('¿Restaurar colección original de 337 modelos?')) {
+                cars = generateInitialCars();
+                await saveCarsToDB(cars);
+                renderSubmenus();
+                updateDashboard();
+            }
+        }
+
+        /* 1. ELIMINAR MODELO */
+        async function deleteCar(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar este modelo?')) {
+                cars = cars.filter(c => c.id !== id);
+                await saveCarsToDB(cars);
+                renderSubmenus();
+                updateDashboard();
+            }
+        }
+
+        async function handleModalDelete() {
+            const id = parseInt(document.getElementById('carFormId').value);
+            if (id) {
+                await deleteCar(id);
+                closeCarModal();
+            }
+        }
+
+        function exportCollection() {
+            const jsonString = JSON.stringify(cars, null, 2);
+            const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", url);
+            dlAnchorElem.setAttribute("download", `coleccion_maquetas_${new Date().toISOString().slice(0,10)}.json`);
+            dlAnchorElem.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportToExcel() {
+            const visibleCars = getFilteredAndSortedCars();
+            if (visibleCars.length === 0) return alert('Sin modelos para exportar.');
+
+            const excelRows = visibleCars.map((car, index) => ({
+                "Nº": index + 1,
+                "IMAGEN": car.image || "Sin imagen",
+                "MODELO": car.name,
+                "MARCA": car.brand,
+                "LOGO": car.logo || "Sin logo",
+                "POTENCIA (CV)": car.power || "-",
+                "VELOCIDAD (km/h)": car.speed || "-",
+                "0-100": car.accel ? `${car.accel}s` : "-",
+                "FABRICANTE 1/43": car.maker || "-",
+                "CATEGORÍA": car.category
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Maquetas");
+            XLSX.writeFile(workbook, `Coleccion_Maquetas_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        function triggerImport() {
+            document.getElementById('importFileInput').click();
+        }
+
+        function importCollection(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        cars = importedData;
+                        await saveCarsToDB(cars);
+                        renderSubmenus();
+                        updateDashboard();
+                        alert('Importación completada.');
+                    }
+                } catch(err) {
+                    alert('Error en formato JSON.');
+                }
+            };
+            reader.readAsText(file, "UTF-8");
+        }
+
+        function handleImageError(carId, type) {
+            const car = cars.find(c => c.id === carId);
+            if (car) {
+                if (type === 'image') car.image = null;
+                if (type === 'logo') car.logo = null;
+                saveCarsToDB(cars);
+                updateDashboard();
+            }
+        }
+
+        function renderSubmenus() {
+            const container = document.getElementById('submenuContainer');
+            let html = `
+                <button onclick="selectCategory('ALL')" class="menu-item ${activeCategory === 'ALL' ? 'active' : ''}">
+                    <span>Todos los modelos</span>
+                    <span class="menu-count">${cars.length}</span>
+                </button>
+            `;
+
+            CATEGORIES.forEach((cat) => {
+                const count = cars.filter(c => c.category === cat).length;
+                const isActive = activeCategory === cat;
+                html += `
+                    <button onclick="selectCategory('${cat}')" class="menu-item ${isActive ? 'active' : ''}">
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${cat}</span>
+                        <span class="menu-count">${count}</span>
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function selectCategory(cat) {
+            activeCategory = cat;
+            searchQuery = '';
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            renderSubmenus();
+            updateDashboard();
+            document.getElementById('sidebar').classList.remove('open');
+        }
+
+        function handleSearchInput() {
+            searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+            updateDashboard();
+        }
+
+        function handleSortChange() {
+            currentSortField = document.getElementById('sortFieldSelect').value;
+            updateDashboard();
+        }
+
+        /* 3. ALTERNAR ORDENASCENDENTE / DESCENDENTE */
+        function toggleSortDirection() {
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            const btn = document.getElementById('sortOrderBtn');
+            btn.innerText = currentSortDirection === 'asc' ? '⬆️ ASC' : '⬇️ DESC';
+            updateDashboard();
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            document.getElementById('viewListBtn').className = `btn ${mode === 'list' ? 'btn-red' : 'btn-dark'}`;
+            document.getElementById('viewGridBtn').className = `btn ${mode === 'grid' ? 'btn-red' : 'btn-dark'}`;
+            updateDashboard();
+        }
+
+        /* 4. BÚSQUEDA Y FILTROS AVANZADOS (Soporta operadores numéricos > / <) */
+        function getFilteredAndSortedCars() {
+            let filtered = cars.filter(car => {
+                const matchCategory = (activeCategory === 'ALL') || (car.category === activeCategory);
+                if (!matchCategory) return false;
+
+                if (!searchQuery) return true;
+
+                // Soporte para búsquedas por operadores de comparación numéricos (>700, <300)
+                if (searchQuery.startsWith('>') || searchQuery.startsWith('<')) {
+                    const operator = searchQuery[0];
+                    const targetVal = parseFloat(searchQuery.slice(1));
+                    if (!isNaN(targetVal)) {
+                        if (operator === '>') return car.power > targetVal || car.speed > targetVal;
+                        if (operator === '<') return car.power < targetVal || car.speed < targetVal;
+                    }
+                }
+
+                return car.name.toLowerCase().includes(searchQuery) ||
+                       car.brand.toLowerCase().includes(searchQuery) ||
+                       (car.maker && car.maker.toLowerCase().includes(searchQuery)) ||
+                       (car.category && car.category.toLowerCase().includes(searchQuery)) ||
+                       (car.power && car.power.toString().includes(searchQuery));
+            });
+
+            filtered.sort((a, b) => {
+                let valA = a[currentSortField] ?? '';
+                let valB = b[currentSortField] ?? '';
+
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+
+                if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            return filtered;
+        }
+
+        function updateDashboard() {
+            const list = getFilteredAndSortedCars();
+            const container = document.getElementById('contentArea');
+            
+            const totalBadge = document.getElementById('totalBadgeCount');
+            if (totalBadge) totalBadge.innerText = `${cars.length} modelos`;
+
+            if (!list || list.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 40px; font-size: 14px;">
+                        <p style="margin-bottom: 8px;">⚠️ No se encontraron maquetas en esta categoría o búsqueda.</p>
+                        <button onclick="selectCategory('ALL')" class="btn btn-red" style="font-size: 11px;">Ver todos los modelos</button>
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentViewMode === 'list') {
+                renderListView(list, container);
+            } else {
+                renderGridView(list, container);
+            }
+        }
+
+        function renderListView(list, container) {
+            let html = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>1. Miniatura</th>
+                                <th>2. Modelo</th>
+                                <th>3. Marca</th>
+                                <th style="text-align: center;">4. Logo</th>
+                                <th style="text-align: right;">5. CV</th>
+                                <th style="text-align: right;">6. km/h</th>
+                                <th style="text-align: right;">7. 0-100</th>
+                                <th>8. Fab. Miniatura</th>
+                                <th style="text-align: center;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            list.forEach(car => {
+                const imgThumb = car.image 
+                    ? `<img src="${car.image}" onerror="handleImageError(${car.id}, 'image')" class="img-thumb">`
+                    : `<label class="img-placeholder">
+                        <span>+ Subir Imagen 1/43</span>
+                        <input type="file" accept="image/*" class="hidden" onchange="uploadCarImage(event, ${car.id})">
+                       </label>`;
+
+                const logoThumb = car.logo 
+                    ? `<img src="${car.logo}" onerror="handleImageError(${car.id}, 'logo')" class="logo-thumb">`
+                    : `<label class="logo-placeholder" title="Cargar Logo">
+                        <span>🛡️</span>
+                        <input type="file" accept="image/*" class="hidden" onchange="uploadCarLogo(event, ${car.id})">
+                       </label>`;
+
+                html += `
+                    <tr>
+                        <td>${imgThumb}</td>
+                        <td style="font-weight: bold; color: white;">
+                            ${car.name}
+                            <div style="font-size: 10px; color: var(--text-muted); font-weight: normal;">${car.category}</div>
+                        </td>
+                        <td style="font-weight: 600;">${car.brand}</td>
+                        <td style="text-align: center;">${logoThumb}</td>
+                        <td style="text-align: right; font-weight: bold; color: var(--racing-accent);">${car.power || '-'} CV</td>
+                        <td style="text-align: right; font-weight: 600;">${car.speed || '-'} km/h</td>
+                        <td style="text-align: right; font-weight: 600;">${car.accel ? car.accel + 's' : '-'}</td>
+                        <td><span style="background: var(--bg-dark); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 11px;">${car.maker || 'N/A'}</span></td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; gap: 4px; justify-content: center;">
+                                <button onclick="openCarModal(${car.id})" class="btn btn-dark" style="padding: 6px;" title="Editar">✏️</button>
+                                <button onclick="deleteCar(${car.id})" class="btn btn-dark" style="padding: 6px; color: var(--racing-red);" title="Eliminar">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        }
+
+        function renderGridView(list, container) {
+            let html = `<div class="grid-container">`;
+
+            list.forEach(car => {
+                const imageContent = car.image
+                    ? `<img src="${car.image}" onerror="handleImageError(${car.id}, 'image')" class="card-img">`
+                    : `<label class="card-img" style="border: 2px dashed var(--border-color); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted);">
+                        <span>+ Subir Foto 1/43</span>
+                        <input type="file" accept="image/*" class="hidden" onchange="uploadCarImage(event, ${car.id})">
+                       </label>`;
+
+                const logoContent = car.logo
+                    ? `<img src="${car.logo}" onerror="handleImageError(${car.id}, 'logo')" class="logo-thumb">`
+                    : `<label class="logo-placeholder" title="Cargar Logo Marca">
+                        <span>🛡️</span>
+                        <input type="file" accept="image/*" class="hidden" onchange="uploadCarLogo(event, ${car.id})">
+                       </label>`;
+
+                html += `
+                    <div class="car-card">
+                        <div style="position: relative;">
+                            ${imageContent}
+                            <div style="position: absolute; top: 8px; right: 8px; display: flex; gap: 4px;">
+                                <button onclick="openCarModal(${car.id})" class="btn btn-dark" style="padding: 6px;" title="Editar">✏️</button>
+                                <button onclick="deleteCar(${car.id})" class="btn btn-dark" style="padding: 6px; color: var(--racing-red);" title="Eliminar">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                                <div>
+                                    <h4 style="font-weight: 800; font-size: 14px; color: white;">${car.name}</h4>
+                                    <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">${car.brand}</span>
+                                </div>
+                                ${logoContent}
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--bg-dark); padding: 8px; border-radius: 8px; text-align: center; font-size: 11px;">
+                                <div><div style="color: var(--text-muted); font-size: 9px;">CV</div><div style="font-weight: bold; color: var(--racing-accent);">${car.power || '-'}</div></div>
+                                <div><div style="color: var(--text-muted); font-size: 9px;">KM/H</div><div style="font-weight: bold;">${car.speed || '-'}</div></div>
+                                <div><div style="color: var(--text-muted); font-size: 9px;">0-100</div><div style="font-weight: bold;">${car.accel ? car.accel + 's' : '-'}</div></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function uploadCarImage(event, id) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const car = cars.find(c => c.id === id);
+                if (car) {
+                    car.image = e.target.result;
+                    await saveCarsToDB(cars);
+                    updateDashboard();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function uploadCarLogo(event, id) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const car = cars.find(c => c.id === id);
+                if (car) {
+                    car.logo = e.target.result;
+                    await saveCarsToDB(cars);
+                    updateDashboard();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function openCarModal(id = null) {
+            const modal = document.getElementById('carModal');
+            const catSelect = document.getElementById('carFormCategory');
+            catSelect.innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            const deleteBtn = document.getElementById('deleteCarBtn');
+
+            if (id) {
+                const car = cars.find(c => c.id === id);
+                document.getElementById('modalTitle').innerText = 'Editar Modelo';
+                document.getElementById('carFormId').value = car.id;
+                document.getElementById('carFormName').value = car.name;
+                document.getElementById('carFormBrand').value = car.brand;
+                document.getElementById('carFormCategory').value = car.category;
+                document.getElementById('carFormPower').value = car.power || '';
+                document.getElementById('carFormSpeed').value = car.speed || '';
+                document.getElementById('carFormAccel').value = car.accel || '';
+                document.getElementById('carFormMaker').value = car.maker || '';
+                deleteBtn.classList.remove('hidden');
+            } else {
+                document.getElementById('modalTitle').innerText = 'Añadir Nuevo Modelo';
+                document.getElementById('carForm').reset();
+                document.getElementById('carFormId').value = '';
+                deleteBtn.classList.add('hidden');
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeCarModal() {
+            document.getElementById('carModal').classList.remove('active');
+        }
+
+        async function handleCarFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('carFormId').value;
+            const carData = {
+                name: document.getElementById('carFormName').value.trim(),
+                brand: document.getElementById('carFormBrand').value.trim(),
+                category: document.getElementById('carFormCategory').value,
+                power: parseInt(document.getElementById('carFormPower').value) || null,
+                speed: parseInt(document.getElementById('carFormSpeed').value) || null,
+                accel: parseFloat(document.getElementById('carFormAccel').value) || null,
+                maker: document.getElementById('carFormMaker').value.trim() || 'Desconocido'
+            };
+
+            if (id) {
+                const car = cars.find(c => c.id == id);
+                Object.assign(car, carData);
+            } else {
+                const newId = cars.length ? Math.max(...cars.map(c => c.id)) + 1 : 1;
+                cars.push({ id: newId, image: null, logo: null, ...carData });
+            }
+
+            await saveCarsToDB(cars);
+            renderSubmenus();
+            updateDashboard();
+            closeCarModal();
+        }
+
+        function openGlobalLogoModal() {
+            const select = document.getElementById('globalBrandSelect');
+            const brands = [...new Set(cars.map(c => c.brand))].sort();
+            select.innerHTML = brands.map(b => `<option value="${b}">${b}</option>`).join('');
+            document.getElementById('globalLogoModal').classList.add('active');
+        }
+
+        function closeGlobalLogoModal() {
+            document.getElementById('globalLogoModal').classList.remove('active');
+        }
+
+        function applyGlobalLogo() {
+            const brand = document.getElementById('globalBrandSelect').value;
+            const fileInput = document.getElementById('globalBrandLogoFile');
+            if (!fileInput.files || !fileInput.files[0]) return alert('Selecciona una imagen.');
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const logoData = e.target.result;
+                cars.forEach(car => {
+                    if (car.brand.toLowerCase() === brand.toLowerCase()) {
+                        car.logo = logoData;
+                    }
+                });
+                await saveCarsToDB(cars);
+                updateDashboard();
+                closeGlobalLogoModal();
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    </script>
+</body>
+</html>
